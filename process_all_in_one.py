@@ -70,7 +70,6 @@ if __name__ == '__main__':
             
             for videoPath in videoPathList:
                 saveName_dcam = videoPath.replace("/RGB/","/DistCam2Face/").replace('_rgb_','_dcam_').replace('.mp4','.csv')
-                saveName_camangle = videoPath.replace("/RGB/","/CamAngle/").replace('_rgb_','_cam_').replace('.mp4','.csv')
                 saveName_head = videoPath.replace("/RGB/","/FaceAngle/").replace('_rgb_','_head_').replace('.mp4','.csv')
                 saveName_eye = videoPath.replace("/RGB/","/Eye-tracker/").replace('_rgb_','_point_').replace('.mp4','.csv')
                 saveName_ddisp = videoPath.replace("/RGB/","/DistDisp2Face/").replace('_rgb_',"_ddisp_").replace('.mp4','.csv')
@@ -252,6 +251,21 @@ if __name__ == '__main__':
                         except:
                             CamAngleCsv.columns=['roll','pitch','yaw']
                         nlines = len(pd.read_csv(camAnglePath.replace("/CamAngle/", "/FaceAngle/").replace('_cam_','_head_')))
+                        inds = np.round(np.linspace(0, len(CamAngleCsv) - 1, nlines)).astype(int)
+                        CamAngleCsv.iloc[inds,1:4].to_csv(camAnglePath, index=False)
+                    else:
+                        # Delete empty files
+                        os.remove(camAnglePath)
+                        missing_camlist.append(camAnglePath)
+                elif os.path.isfile(camAnglePath.replace('.csv','.txt')):
+                    camAnglePath = camAnglePath.replace('.csv','.txt')
+                    if os.path.getsize(camAnglePath) > 10:
+                        CamAngleCsv = load_quoted_csv(camAnglePath)
+                        try:
+                            CamAngleCsv.columns=['dummy', 'roll','pitch','yaw', 'dummy']
+                        except:
+                            CamAngleCsv.columns=['roll','pitch','yaw']
+                        nlines = len(pd.read_csv(camAnglePath.replace("/CamAngle/", "/FaceAngle/").replace('_cam_','_head_').replace('.txt','.csv')))
                         inds = np.round(np.linspace(0, len(CamAngleCsv) - 1, nlines)).astype(int)
                         CamAngleCsv.iloc[inds,1:4].to_csv(camAnglePath, index=False)
                     else:
