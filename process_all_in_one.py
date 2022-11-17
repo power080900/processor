@@ -70,6 +70,7 @@ if __name__ == '__main__':
             
             for videoPath in videoPathList:
                 saveName_dcam = videoPath.replace("/RGB/","/DistCam2Face/").replace('_rgb_','_dcam_').replace('.mp4','.csv')
+                saveName_camangle = videoPath.replace("/RGB/","/CamAngle/").replace('_rgb_','_cam_').replace('.mp4','.csv')
                 saveName_head = videoPath.replace("/RGB/","/FaceAngle/").replace('_rgb_','_head_').replace('.mp4','.csv')
                 saveName_eye = videoPath.replace("/RGB/","/Eye-tracker/").replace('_rgb_','_point_').replace('.mp4','.csv')
                 saveName_ddisp = videoPath.replace("/RGB/","/DistDisp2Face/").replace('_rgb_',"_ddisp_").replace('.mp4','.csv')
@@ -242,10 +243,12 @@ if __name__ == '__main__':
             CamAngleCsv = None
             missing_camlist =[]
             for camAnglePath in camAnglePathList:
-                if os.path.isfile(camAnglePath):
+                # print(camAnglePath.replace('.csv','.txt'))
+                # print(camAnglePath)
+                if os.path.exists(camAnglePath):
                     if os.path.getsize(camAnglePath) > 10:
-                        #print(camAnglePath)
                         CamAngleCsv = load_quoted_csv(camAnglePath)
+                        # print(camAnglePath)
                         try:
                             CamAngleCsv.columns=['dummy', 'roll','pitch','yaw', 'dummy']
                         except:
@@ -257,27 +260,31 @@ if __name__ == '__main__':
                         # Delete empty files
                         os.remove(camAnglePath)
                         missing_camlist.append(camAnglePath)
-                elif os.path.isfile(camAnglePath.replace('.csv','.txt')):
+                elif os.path.exists(camAnglePath.replace('.csv','.txt')):
                     camAnglePath = camAnglePath.replace('.csv','.txt')
                     if os.path.getsize(camAnglePath) > 10:
-                        CamAngleCsv = load_quoted_csv(camAnglePath)
+                        CamAngleCsv = load_txt_or_csv(camAnglePath)
+                        # print(camAnglePath)
+                        # print(CamAngleCsv)
+
                         try:
                             CamAngleCsv.columns=['dummy', 'roll','pitch','yaw', 'dummy']
                         except:
                             CamAngleCsv.columns=['roll','pitch','yaw']
                         nlines = len(pd.read_csv(camAnglePath.replace("/CamAngle/", "/FaceAngle/").replace('_cam_','_head_').replace('.txt','.csv')))
                         inds = np.round(np.linspace(0, len(CamAngleCsv) - 1, nlines)).astype(int)
-                        CamAngleCsv.iloc[inds,1:4].to_csv(camAnglePath, index=False)
+                        CamAngleCsv.iloc[inds,1:4].to_csv(camAnglePath.replace('.txt','.csv'), index=False)
                     else:
                         # Delete empty files
                         os.remove(camAnglePath)
-                        missing_camlist.append(camAnglePath)
+                        missing_camlist.append(camAnglePath.replace('.txt','.csv'))
                 else:
                     missing_camlist.append(camAnglePath)
 
             # Copy if missing CamAngle
             if deviceName in ['Monitor', 'VehicleLCD', 'Laptop']:
                 for camAnglePath in missing_camlist:
+                    # print('campath:',type(camAnglePath))
                     CamAngleCsv.iloc[inds,1:4].to_csv(camAnglePath, index=False)
 
             if len(missing_camlist) > 0 and deviceName in ['Tablet', 'Smartphone']:
