@@ -285,6 +285,8 @@ if __name__ == '__main__':
             if deviceName in ['Monitor', 'VehicleLCD', 'Laptop']:
                 for camAnglePath in missing_camlist:
                     # print('campath:',type(camAnglePath))
+                    nlines = len(pd.read_csv(camAnglePath.replace("/CamAngle/", "/FaceAngle/").replace('_cam_','_head_').replace('.txt','.csv')))
+                    inds = np.round(np.linspace(0, len(CamAngleCsv) - 1, nlines)).astype(int)
                     CamAngleCsv.iloc[inds,1:4].to_csv(camAnglePath, index=False)
 
             if len(missing_camlist) > 0 and deviceName in ['Tablet', 'Smartphone']:
