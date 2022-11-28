@@ -198,7 +198,10 @@ if __name__ == '__main__':
                         print("Make Ddisp first", saveName_dcam)
                         pass
                 else:
-                    ddispCsv = save_iris_dist(resultDistance, saveName_dcam)
+                    dcamCsv = save_iris_dist(resultDistance, saveName_dcam)
+                    shorten(saveName_dcam, frameCount, 
+                                    df = dcamCsv, 
+                                    col_names=["distance"])
                     logging.warning(f"{deviceName} has no dcam file: {saveName_dcam}")
 
 

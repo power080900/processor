@@ -85,12 +85,12 @@ for idDir in idDirlist:
                 depth = depth[0]
                 targetpath = f"processing/{place}/{ID}/{Try}/{type}/DistDisp2Face"
                 os.makedirs(targetpath,exist_ok=True)
-                targetname = f"{targetpath}/NIA22EYE_{place}_{ID}_{Try}_{scenario}_{type[0]}_ddisp_{state}_{pose}_{disp}.txt"
+                targetname = f"{targetpath}/NIA22EYE_{place}_{ID}_{Try}_S{scenario}_{type[0]}_ddisp_{state}_{pose}_{disp}.txt"
                 if os.path.isfile(targetname):
                     print("isfile!", depth)
                     print("filesize", os.path.getsize(targetname))
                 else:
-                    os.rename(depth, targetname)
+                    os.rename(depth, targetname.replace('.txt','.csv'))
                 print(targetname)
                 
     for cl in moClass:
