@@ -2,59 +2,85 @@ import glob
 import pandas as pd
 import os
 
-device_list = ["Laptop","Monitor","Smartphone","Tablet","VehicleLCD"]
-df_columns = ['id','date','device','scenario','condition','CamAngle','DistCam2Face','DistDisp2Face','Eye-tracker','FaceAngle']
-root_dir = "/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/1028/processing/S1/"
-id_list = glob.glob(root_dir+'*')
-id_list.sort()
+# root_dir = "/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/1122/processing/S1/163/T1/*/*/*_rgb_*"
+# dir_list = glob.glob(root_dir)
+# dir_list.sort()
+target_dir = "/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/????/processing/S1/"
+target_id = target_dir+"*"
+target_list = glob.glob(target_id)
+target_list.sort()
+table = pd.read_csv('/media/di/data/processor/summary/data_table.csv')
 
-for id in id_list:
-    df = pd.DataFrame()
-    id = id.split("/")[-1]
-    for device in device_list:
-        target_condition=[]
-        target_dir_list = glob.glob(root_dir+f"{id}/T1/{device}/RGB/*.mp4")
-        target_dir_list.sort()
-        for target_dir in target_dir_list:
-            condition_list = target_dir.split("/")[-1]
-            condition = "_".join(condition_list.split("_")[-3:]).replace(".mp4",".csv")
-            scenario = condition_list.split("_")[4]
-            dev = condition_list.split("_")[-5]
-            date = target_dir.split("/")[-8]
-            df_target = glob.glob(root_dir + f"{id}/T1/{device}/*/*_{id}_*_{scenario}_{dev}_*_{condition}")
-            df_target.sort()
-            rows = [id,date,device,scenario,condition.replace(".csv","")]
-            for i in df_target:
-                if os.path.exists(i):
-                    row = len(pd.read_csv(i))
-                    rows.append(str(row))
+for id in target_list[3:80]:
+    df = pd.read_csv('/media/di/data/processor/summary/data_frame.csv')
+    target_date = id.split('/')[8]
+    id = id.split('/')[-1] 
+    
+    print("now",id,"saving")
+    cnt = 0
+    for device, condition in zip(table['device'] , table['condition']):
+        if device == "Smartphone" or device == "Tablet":
+            # if int(id) % 10 == 0 :
+            #     scenario = "S10"
+            # else :
+            #     scenario = "S"+str(int(id) % 10).zfill(2)
+            scenario_before = scenario
+            scenario_dir = f'/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/{target_date}/processing/S1/{id}/*/'
+            try :
+                scenario = ''.join(glob.glob(scenario_dir+f'{device}/RGB/*{condition}.mp4')).split('_')[-6]
+            except:
+                scenario = scenario_before
+            rows = [id, device, scenario, condition]
+            for row_column in table.columns[4:]:
+                if row_column == "RGB" or row_column == "IR":
+                    target_name = scenario_dir+f'{device}/{row_column}/*_{scenario}_*_{condition}.mp4'
+                    target_name = glob.glob(target_name)
+                    if os.path.exists("".join(target_name)) and os.path.getsize("".join(target_name)) > 0:
+                        target_row = 1
+                    else:
+                        target_row = 0
                 else:
-                    row = 0
-                    rows.append(str(row))
-            print(rows)
-            df = df.append(pd.Series(rows),ignore_index=True)
-    df.columns = df_columns
-    df.to_csv(f"summary/{id}.csv",mode="a",index=None)
-        
-# for device in device_list:
-#     print(device)
-#     for category in categories:
-#         target_dir_list = glob.glob(f"/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/08??/processing/S1/???/T1/{device}/{category}/*.csv")
-#         target_dir_list.sort()
-#         for target_dir in target_dir_list:
-#             try:
-#                 print("now:",target_dir)
-#                 category = target_dir.split("/")[-2]
-#                 condition_list = target_dir.split("/")[-1]
-#                 scenario = condition_list.split("_")[4]
-#                 condition = "_".join(condition_list.split("_")[-3:]).replace(".csv","")
-#                 id = target_dir.split("/")[-5]
-#                 date = target_dir.split("/")[-8]
-#                 row = len(pd.read_csv(target_dir))
-#                 df = pd.DataFrame(id,date,device,scenario,condition)
-#             except:
-#                 print(target_dir,"error")
-#                 bad.append(target_dir)
-# with open(f"bad.csv", "a") as f:
-#     for i in bad:
-#         f.write(f"{i}\n")
+                    target_name = f'/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/{target_date}/processing/S1/{id}/*/{device}/{row_column}/*_{scenario}_*_{condition}.csv'
+                    target_name = glob.glob(target_name)
+                    if os.path.exists("".join(target_name)) and os.path.getsize("".join(target_name)) > 0:
+                        target_file = pd.read_csv("".join(target_name))
+                        target_row = len(target_file)
+                    else:
+                        target_row = 0
+                rows.append(target_row)
+            rows = pd.DataFrame(rows).transpose()
+            rows.columns = df.columns
+            df = pd.concat([df,rows])
+            cnt += 1
+            print(cnt,"/ 453")
+        else:
+            for i in range(3):
+                if (int(id)+i) % 10 == 0 :
+                    scenario = "S10"
+                else :
+                    scenario = "S"+str((int(id)+i) % 10).zfill(2)    
+                rows = [id, device, scenario, condition]
+                for row_column in table.columns[4:]:
+                    if row_column == "RGB" or row_column == "IR":
+                        target_name = f'/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/{target_date}/processing/S1/{id}/*/{device}/{row_column}/*_{scenario}_*_{condition}.mp4'
+                        target_name = glob.glob(target_name)
+                        if os.path.exists("".join(target_name)) and os.path.getsize("".join(target_name)) > 0:
+                            target_row = 1
+                        else:
+                            target_row = 0
+                    else:
+                        target_name = f'/run/user/1000/gvfs/ftp:host=192.168.0.43/NIA2022/raw/{target_date}/processing/S1/{id}/*/{device}/{row_column}/*_{scenario}_*_{condition}.csv'
+                        target_name = glob.glob(target_name)
+                        if os.path.exists("".join(target_name)) and os.path.getsize("".join(target_name)) > 0:
+                            target_file = pd.read_csv("".join(target_name))
+                            target_row = len(target_file)
+                        else:
+                            target_row = 0
+                    rows.append(target_row)
+                rows = pd.DataFrame(rows).transpose()
+                rows.columns = df.columns
+                df = pd.concat([df,rows])
+                cnt += 1
+                print(cnt,"/ 453")
+    df.to_csv(f'/media/di/data/processor/summary/{id}.csv',mode="w",index=None)
+    print(id,"save done")
